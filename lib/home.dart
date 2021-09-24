@@ -5,6 +5,7 @@ import 'package:badges/badges.dart';
 import 'constants.dart';
 import 'engine.dart';
 import 'note.dart';
+import 'package:toggle_switch/toggle_switch.dart';
 
 //singleton
 var engine = Engine();
@@ -25,20 +26,28 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
+  var scaffoldKey = GlobalKey<ScaffoldState>();
+  int initialIndex = 0;
   @override
   Widget build(BuildContext context) {
-    return  SafeArea(
+    return SafeArea(
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.title),backgroundColor: Colors.brown),
-        backgroundColor: Colors.brown,
-        body:Column(
+        key: scaffoldKey,
+        backgroundColor: Colors.white70,
+        body: Column(
           children: [
-
-            Expanded(flex: 6, child: ListView(
-              scrollDirection: Axis.horizontal,
-                children:  <Widget>[
-                  Bridge(rootNote1: widget.rootNote1,rootNote2: widget.rootNote2,rootNote3: widget.rootNote3,rootNote4: widget.rootNote4,rootNote5: widget.rootNote5,rootNote6: widget.rootNote6),
+            Expanded(
+              flex: 6,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: <Widget>[
+                  Bridge(
+                      rootNote1: widget.rootNote1,
+                      rootNote2: widget.rootNote2,
+                      rootNote3: widget.rootNote3,
+                      rootNote4: widget.rootNote4,
+                      rootNote5: widget.rootNote5,
+                      rootNote6: widget.rootNote6),
                   Fret(fretPos: 1),
                   const FretWire(),
                   Fret(fretPos: 2),
@@ -70,63 +79,92 @@ class _HomePageState extends State<HomePage> {
                   Fret(fretPos: 15),
                   const FretWire(),
                 ],
-              ),),
-            Expanded(flex: 1, child: Container(color: Colors.brown,child:
-            ButtonBar(
-              children: <Widget>[
-                Visibility(
-                  visible: true,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                        primary: Colors.white),
-                    onPressed: () {
-                        setState(() {
-                          engine.showAllNotes();
-                        });
-                    },
-                    child: const Text("Show"),
-                  ),
-                ),
-                Visibility(
-                  visible: true,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                        primary: Colors.white),
-                    onPressed: () {
-                      setState(() {
-                        engine.hideAllNotes();
-                      });
-                    },
-                    child: const Text("Hide"),
-                  ),
-                ),
-                Visibility(
-                  visible: true,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                        primary: Colors.white),
-                    onPressed: () {
+              ),
+            ),
+            Expanded(
+                flex: 1,
+                child: Container(
+                  color: Colors.brown,
+                  child: ButtonBar(
+                    alignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      IconButton(
+                          icon: const Icon(
+                            Icons.menu,
+                            color: Colors.white,
+                          ),
+                          tooltip: 'Open Menu',
+                          onPressed: () {
+                            setState(() {
+                              scaffoldKey.currentState?.openDrawer();
+                            });
+                          }),
+                      // Here, default theme colors are used for activeBgColor, activeFgColor, inactiveBgColor and inactiveFgColor
+                      ToggleSwitch(
+                        initialLabelIndex: initialIndex,
+                        totalSwitches: 4,
+                        labels: const ['All', 'Notes', 'Colours', 'None'],
+                        onToggle: (index) {
+                          setState(() {
+                            initialIndex = index;
+                            engine.setShowState(ShowState.values[index]);
+                          });
+                        },
+                      ),
+                      Visibility(
+                        visible: true,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              side: const BorderSide(color: Colors.white),
+                              primary: Colors.white),
+                          onPressed: () {
+                            setState(() {
+                              engine.showAllNotes();
+                            });
+                          },
+                          child: const Text("Show"),
+                        ),
+                      ),
+                      Visibility(
+                        visible: true,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              side: const BorderSide(color: Colors.white),
+                              primary: Colors.white),
+                          onPressed: () {
+                            setState(() {
+                              engine.hideAllNotes();
+                            });
+                          },
+                          child: const Text("Hide"),
+                        ),
+                      ),
+                      Visibility(
+                        visible: true,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              side: const BorderSide(color: Colors.white),
+                              primary: Colors.white),
+                          onPressed: () {
+                            engine.reveal();
+                          },
+                          child: const Text("Reveal"),
+                        ),
+                      ),
 
-                    },
-                    child: const Text("Stop"),
+                      Visibility(
+                        visible: true,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              side: const BorderSide(color: Colors.white),
+                              primary: Colors.white),
+                          onPressed: () {},
+                          child: const Text("Train"),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                Visibility(
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                        primary: Colors.white),
-                    onPressed: () {
-
-                    },
-                    child: const Text("Pause"),
-                  ),
-                ),
-              ],
-            ),))
+                ))
           ],
         ),
         drawer: Drawer(
@@ -173,7 +211,7 @@ class Fret extends StatefulWidget {
   final int fretPos;
 
   // ignore: prefer_const_constructors_in_immutables
-  Fret ({ Key? key,required this.fretPos}): super(key: key);
+  Fret({Key? key, required this.fretPos}) : super(key: key);
 
   @override
   _FretState createState() => _FretState();
@@ -186,13 +224,13 @@ class _FretState extends State<Fret> {
       width: 160.0,
       child: Column(
         children: [
-          FretIndex(fretPos:widget.fretPos),
-          SingleFret(stringPos:0,fretPos:widget.fretPos,rootNote: Note.E),
-          SingleFret(stringPos:1,fretPos:widget.fretPos,rootNote: Note.B),
-          SingleFret(stringPos:2,fretPos:widget.fretPos,rootNote: Note.G),
-          SingleFret(stringPos:3,fretPos:widget.fretPos,rootNote: Note.D),
-          SingleFret(stringPos:4,fretPos:widget.fretPos,rootNote: Note.A),
-          SingleFret(stringPos:5,fretPos:widget.fretPos,rootNote: Note.E),
+          FretIndex(fretPos: widget.fretPos),
+          SingleFret(stringPos: 0, fretPos: widget.fretPos, rootNote: Note.E),
+          SingleFret(stringPos: 1, fretPos: widget.fretPos, rootNote: Note.B),
+          SingleFret(stringPos: 2, fretPos: widget.fretPos, rootNote: Note.G),
+          SingleFret(stringPos: 3, fretPos: widget.fretPos, rootNote: Note.D),
+          SingleFret(stringPos: 4, fretPos: widget.fretPos, rootNote: Note.A),
+          SingleFret(stringPos: 5, fretPos: widget.fretPos, rootNote: Note.E),
         ],
       ),
     );
@@ -200,37 +238,52 @@ class _FretState extends State<Fret> {
 }
 
 class NoteBadge extends StatefulWidget {
-
   final Color colour;
   final String text;
+  final FretData data;
 
-  const NoteBadge({Key? key, required this.colour, required this.text}) : super(key: key);
+  const NoteBadge(
+      {Key? key, required this.colour, required this.text, required this.data})
+      : super(key: key);
 
   @override
   _NoteBadgeState createState() => _NoteBadgeState();
 }
 
 class _NoteBadgeState extends State<NoteBadge> {
+  Color getColor() {
+    if (widget.data.showState == ShowState.All ||
+        widget.data.showState == ShowState.Colours) {
+      return widget.colour;
+    } else {
+      return Colors.white60;
+    }
+  }
+
+  String getNoteText() {
+    if (widget.data.showState == ShowState.All ||
+        widget.data.showState == ShowState.Notes) {
+      return widget.text;
+    } else {
+      return "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
-        child:   Badge(
-          badgeColor: widget.colour,
-          badgeContent: SizedBox(
-              width: 24,
-              height: 24,
-              child: Center(child: Text(widget.text))),
-          elevation: 4,
-        )
-    );
+        child: Badge(
+      badgeColor: getColor(),
+      badgeContent: SizedBox(
+          width: 24, height: 24, child: Center(child: Text(getNoteText()))),
+      elevation: 4,
+    ));
   }
 }
 
-
-
-
 class FretIndex extends StatefulWidget {
   final int fretPos;
+
   const FretIndex({Key? key, required this.fretPos}) : super(key: key);
 
   @override
@@ -242,71 +295,67 @@ class _FretIndexState extends State<FretIndex> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: fretIndexHeight,
-      child: Center(
-        child : Text(widget.fretPos.toString())
-      ),
+      child: Center(child: Text(widget.fretPos.toString())),
     );
   }
 }
 
 class SingleFret extends StatefulWidget {
-
   final int fretPos;
   final int stringPos;
   final Note rootNote;
-  const SingleFret ({ Key? key,required this.stringPos, required this.fretPos,required this.rootNote }): super(key: key);
+
+  const SingleFret(
+      {Key? key,
+      required this.stringPos,
+      required this.fretPos,
+      required this.rootNote})
+      : super(key: key);
+
   @override
   _SingleFretState createState() => _SingleFretState();
 }
 
 class _SingleFretState extends State<SingleFret> {
-
-  Color getFretColour()
-  {
-    if(widget.stringPos==0) {
+  Color getFretColour() {
+    if (widget.stringPos == 0) {
       return Colors.brown.shade800;
-    }
-    else if(widget.stringPos==1) {
+    } else if (widget.stringPos == 1) {
       return Colors.brown.shade700;
-    }
-    else if(widget.stringPos==2) {
+    } else if (widget.stringPos == 2) {
       return Colors.brown.shade600;
-    }
-    else if(widget.stringPos==3) {
+    } else if (widget.stringPos == 3) {
       return Colors.brown.shade500;
-    }
-    else if(widget.stringPos==4) {
+    } else if (widget.stringPos == 4) {
       return Colors.brown.shade400;
-    }
-    else{
+    } else {
       return Colors.brown.shade300;
     }
   }
 
-  Note getNote()
-  {
-     Note currentNote = widget.rootNote;
-     for(int i = 0; i < widget.fretPos;i++)
-     {
-        currentNote = currentNote.nextNote();
-     }
-     return currentNote;
+  Note getNote() {
+    Note currentNote = widget.rootNote;
+    for (int i = 0; i < widget.fretPos; i++) {
+      currentNote = currentNote.nextNote();
+    }
+    return currentNote;
   }
 
-  bool getVisibility()
-  {
-    var vis =  engine.data[widget.stringPos][widget.fretPos].visibility;
+  bool getVisibility() {
+    var vis = engine.data[widget.stringPos][widget.fretPos].visibility;
     return vis;
   }
 
-  Color getColour()
-  {
+  Color getColour() {
     return NoteHelper.getColour(note: getNote());
   }
 
-  String getNoteText()
-  {
+  String getNoteText() {
     return NoteHelper.noteText(note: getNote());
+  }
+
+  FretData getNoteData() {
+    return engine.data[widget.stringPos][widget.fretPos];
   }
 
   @override
@@ -314,16 +363,22 @@ class _SingleFretState extends State<SingleFret> {
     return Expanded(
       child: Stack(
         children: [
-          Container(color: getFretColour(),),
+          Container(
+            color: getFretColour(),
+          ),
           Visibility(
-            visible: getVisibility(),
+              visible: getVisibility(),
               replacement: const SizedBox(width: 24, height: 24),
-              child: NoteBadge(colour: getColour(), text: getNoteText()))
+              child: NoteBadge(
+                  colour: getColour(),
+                  text: getNoteText(),
+                  data: getNoteData()))
         ],
       ),
     );
   }
 }
+
 class FretWire extends StatelessWidget {
   const FretWire({
     Key? key,
@@ -338,7 +393,7 @@ class FretWire extends StatelessWidget {
         child: Container(
           color: Colors.grey,
           child: Center(
-            child:  SizedBox(
+            child: SizedBox(
               width: 4,
               child: Container(
                 color: darkGrey,
@@ -352,7 +407,6 @@ class FretWire extends StatelessWidget {
 }
 
 class Bridge extends StatefulWidget {
-
   final Note rootNote1;
   final Note rootNote2;
   final Note rootNote3;
@@ -360,7 +414,15 @@ class Bridge extends StatefulWidget {
   final Note rootNote5;
   final Note rootNote6;
 
-  const Bridge({Key? key, required this.rootNote1, required this.rootNote2, required this.rootNote3, required this.rootNote4, required this.rootNote5, required this.rootNote6}) : super(key: key);
+  const Bridge(
+      {Key? key,
+      required this.rootNote1,
+      required this.rootNote2,
+      required this.rootNote3,
+      required this.rootNote4,
+      required this.rootNote5,
+      required this.rootNote6})
+      : super(key: key);
 
   @override
   _BridgeState createState() => _BridgeState();
@@ -372,7 +434,7 @@ class _BridgeState extends State<Bridge> {
     return Padding(
       padding: const EdgeInsets.only(top: fretIndexHeight),
       child: SizedBox(
-        width: 50.0,
+        width: 60.0,
         child: Stack(
           children: [
             Container(
@@ -393,30 +455,51 @@ class _BridgeState extends State<Bridge> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Visibility(
-                  visible:  engine.data[0][0].visibility,
+                    visible: engine.data[0][0].visibility,
                     replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(colour: NoteHelper.getColour(note: widget.rootNote1),text: NoteHelper.noteText( note: widget.rootNote1))),
+                    child: NoteBadge(
+                        colour: NoteHelper.getColour(note: widget.rootNote1),
+                        text: NoteHelper.noteText(note: widget.rootNote1),
+                        data: engine.data[0][0])),
                 Visibility(
                   visible: engine.data[1][0].visibility,
-                    replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(colour: NoteHelper.getColour(note: widget.rootNote2),text: NoteHelper.noteText( note: widget.rootNote2))),
+                  replacement: const SizedBox(width: 24, height: 24),
+                  child: NoteBadge(
+                      colour: NoteHelper.getColour(note: widget.rootNote2),
+                      text: NoteHelper.noteText(note: widget.rootNote2),
+                      data: engine.data[1][0]),
+                ),
                 Visibility(
-                    visible: engine.data[2][0].visibility,
-                    replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(colour: NoteHelper.getColour(note: widget.rootNote3),text: NoteHelper.noteText( note: widget.rootNote3))),
+                  visible: engine.data[2][0].visibility,
+                  replacement: const SizedBox(width: 24, height: 24),
+                  child: NoteBadge(
+                      colour: NoteHelper.getColour(note: widget.rootNote3),
+                      text: NoteHelper.noteText(note: widget.rootNote3),
+                      data: engine.data[2][0]),
+                ),
                 Visibility(
-                  visible:  engine.data[3][0].visibility,
+                    visible: engine.data[3][0].visibility,
                     replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(colour: NoteHelper.getColour(note: widget.rootNote4),text: NoteHelper.noteText( note: widget.rootNote4))),
+                    child: NoteBadge(
+                        colour: NoteHelper.getColour(note: widget.rootNote4),
+                        text: NoteHelper.noteText(note: widget.rootNote4),
+                        data: engine.data[3][0])),
                 Visibility(
                   visible: engine.data[4][0].visibility,
                   replacement: const SizedBox(width: 24, height: 24),
-                  child: NoteBadge(colour: NoteHelper.getColour(note: widget.rootNote5),text: NoteHelper.noteText( note: widget.rootNote5)),
+                  child: NoteBadge(
+                      colour: NoteHelper.getColour(note: widget.rootNote5),
+                      text: NoteHelper.noteText(note: widget.rootNote5),
+                      data: engine.data[4][0]),
                 ),
                 Visibility(
                   visible: engine.data[5][0].visibility,
                   replacement: const SizedBox(width: 24, height: 24),
-                  child: NoteBadge(colour: NoteHelper.getColour(note: widget.rootNote6),text: NoteHelper.noteText( note: widget.rootNote6))),
+                  child: NoteBadge(
+                      colour: NoteHelper.getColour(note: widget.rootNote6),
+                      text: NoteHelper.noteText(note: widget.rootNote6),
+                      data: engine.data[5][0]),
+                ),
               ],
             ),
           ],

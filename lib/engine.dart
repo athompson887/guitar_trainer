@@ -1,16 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'constants.dart';
-import 'home.dart';
 
 class FretData{
    bool visibility = false;
+   bool reveal = false;
+   ShowState showState = ShowState.All;
 }
 
+enum ShowState {
+  All,
+  Notes,
+  Colours,
+  None
+}
 
 class Engine {
-
   static final Engine theOne = Engine._internal();
   factory Engine() => theOne;
   // private, named constructor
@@ -27,6 +30,15 @@ class Engine {
       }
   }
 
+  reveal()
+  {
+    for (var element in data) {
+      for (var e in element) {
+        e.reveal = true;
+      }
+    }
+  }
+
   showAllNotes()
   {
     for (var element in data) {
@@ -36,4 +48,12 @@ class Engine {
     }
   }
 
+  setShowState(ShowState state)
+  {
+    for (var element in data) {
+      for (var e in element) {
+        e.showState = state;
+      }
+    }
+  }
 }
