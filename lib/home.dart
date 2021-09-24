@@ -103,6 +103,12 @@ class _HomePageState extends State<HomePage> {
                       ToggleSwitch(
                         initialLabelIndex: initialIndex,
                         totalSwitches: 4,
+                        activeBgColors: const [
+                          [Colors.green],
+                          [Colors.blue],
+                          [Colors.red],
+                          [Colors.black]
+                        ],
                         labels: const ['All', 'Notes', 'Colours', 'None'],
                         onToggle: (index) {
                           setState(() {
