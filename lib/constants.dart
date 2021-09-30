@@ -9,6 +9,7 @@ const int numStrings = 6;
 const double bridgeWidth = 60;
 const double fretWireWidth = 4;
 const double fretWireCentreWidth = 1;
+const double numVisibleFrets = 5;
 
 const appTitle = 'My Guitar Tool';
 const bool TEST_MODE = false;

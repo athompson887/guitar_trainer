@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guitar_trainer/colours.dart';
 import 'package:badges/badges.dart';
+import 'package:guitar_trainer/helper.dart';
 import 'constants.dart';
 import 'engine.dart';
 import 'note.dart';
@@ -61,35 +62,35 @@ class _HomePageState extends State<HomePage> {
                         scrollDirection: Axis.horizontal,
                         children:  <Widget>[
                           Fret(fretPos: 1),
-                          FretWire(),
+                        //  FretWire(),
                           Fret(fretPos: 2),
-                          FretWire(),
+                       //   FretWire(),
                           Fret(fretPos: 3),
-                          FretWire(),
+                      //    FretWire(),
                           Fret(fretPos: 4),
-                          FretWire(),
+                        //  FretWire(),
                           Fret(fretPos: 5),
-                          FretWire(),
+                       //   FretWire(),
                           Fret(fretPos: 6),
-                          FretWire(),
+                      //    FretWire(),
                           Fret(fretPos: 7),
-                          FretWire(),
+                      //    FretWire(),
                           Fret(fretPos: 8),
-                          FretWire(),
+                     //     FretWire(),
                           Fret(fretPos: 9),
-                          FretWire(),
+                      //    FretWire(),
                           Fret(fretPos: 10),
-                          FretWire(),
+                      //    FretWire(),
                           Fret(fretPos: 11),
-                          FretWire(),
+                      //    FretWire(),
                           Fret(fretPos: 12),
-                          FretWire(),
+                       //   FretWire(),
                           Fret(fretPos: 13),
-                          FretWire(),
+                      //    FretWire(),
                           Fret(fretPos: 14),
-                          FretWire(),
+                     //     FretWire(),
                           Fret(fretPos: 15),
-                          FretWire(),
+                    //      FretWire(),
                         ],
                       ),
                     ),
@@ -221,7 +222,7 @@ class _FretState extends State<Fret> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 160.0,
+      width: (displayWidth(context)-bridgeWidth)/numVisibleFrets,
       child: Column(
         children: [
           FretIndex(fretPos: widget.fretPos),
