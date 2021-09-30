@@ -427,12 +427,12 @@ class FretWire extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: fretIndexHeight),
       child: SizedBox(
-        width: 10.0,
+        width: fretWireWidth,
         child: Container(
           color: Colors.grey,
           child: Center(
             child: SizedBox(
-              width: 4,
+              width: fretWireCentreWidth,
               child: Container(
                 color: darkGrey,
               ),
@@ -458,12 +458,12 @@ class _BridgeState extends State<Bridge> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 60,
+      width: bridgeWidth,
       child: Column(
           children: [
-            SizedBox(
-              child: Container(color: Colors.brown),
-              height: fretIndexHeight),
+            SizedBox(height: fretIndexHeight,
+              child: Container(color: Colors.brown)),
+
           Expanded(
           flex: mainFlex,
           child:Stack(
@@ -545,7 +545,7 @@ class BridgeGap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 10,
+      height: 6,
       child: Container(
         color: darkGrey,
       ),

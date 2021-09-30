@@ -6,6 +6,10 @@ const double fretIndexHeight = 20.0;
 const int numFrets = 16;
 const int numStrings = 6;
 
+const double bridgeWidth = 60;
+const double fretWireWidth = 4;
+const double fretWireCentreWidth = 1;
+
 const appTitle = 'My Guitar Tool';
 const bool TEST_MODE = false;
 

@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 import 'package:flutter_midi/flutter_midi.dart';
 import 'package:tonic/tonic.dart';
+import 'home.dart';
 import 'note.dart';
 
 class FretData{
-   bool visibility = false;
+   bool visibility = engine.visibility;
    bool reveal = false;
    ShowState showState = ShowState.All;
    late NoteData noteData;
@@ -47,7 +48,7 @@ class Engine {
 
   static final Engine theOne = Engine._internal();
   factory Engine() => theOne;
-  bool visibility = false;
+  bool visibility = true;
   // private, named constructor
   Engine._internal();
 
