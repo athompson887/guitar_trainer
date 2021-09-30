@@ -22,6 +22,7 @@ dev_dependencies:
   toggle_switch: ^1.2.0
   tonic: ^0.2.3
   flutter_midi: ^1.1.0
+  flutter_vibrate: ^1.1.0
 
 flutter:
 
@@ -29,3 +30,5 @@ flutter:
 
   assets:
     - assets/sounds/guitar_accoustic.sf2
+    - assets/images/fret.png
+    - assets/images/wood_texture.png

@@ -59,10 +59,21 @@ class Engine {
   var eStringLow = [];
 
   var data = [];
-
- // var data = List.generate(numStrings, (_) => List.filled(numFrets, FretData(), growable: false));
+  List<bool> selections = List.generate(2,(_) => false);
 
   final flutterMidi = FlutterMidi();
+
+  bool noSound()
+  {
+    return selections[0];
+  }
+
+  bool noHaptic()
+  {
+    return selections[1];
+  }
+
+
 
   initData()
   {
@@ -97,7 +108,10 @@ class Engine {
   }
 
   void play(int midi) {
-      flutterMidi.playMidiNote(midi: midi);
+    if(noSound()) {
+      return;
+    }
+    flutterMidi.playMidiNote(midi: midi);
   }
 
   hideAllNotes()

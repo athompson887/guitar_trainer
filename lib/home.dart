@@ -8,6 +8,7 @@ import 'engine.dart';
 import 'note.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 
 var engine = Engine();
 var scaffoldKey = GlobalKey<ScaffoldState>();
@@ -26,6 +27,8 @@ class _HomePageState extends State<HomePage> {
   String fileName = 'guitar_accoustic.sf2';
   String path = "assets/sounds/";
   int initialIndex = 0;
+
+
 
   @override
   void initState() {
@@ -97,6 +100,18 @@ class _HomePageState extends State<HomePage> {
                           child: ButtonBar(
                             alignment: MainAxisAlignment.start,
                             children: <Widget>[
+                              ToggleButtons(
+                                children: const <Widget>[
+                                  Icon(Icons.volume_mute_sharp),
+                                  Icon(Icons.vibration)
+                                ],
+                                onPressed: (int index) {
+                                  setState(() {
+                                    engine.selections[index] = !engine.selections[index];
+                                  });
+                                },
+                                isSelected: engine.selections,
+                              ),
                               // Here, default theme colors are used for activeBgColor, activeFgColor, inactiveBgColor and inactiveFgColor
                               ToggleSwitch(
                                 initialLabelIndex: initialIndex,
@@ -233,7 +248,41 @@ class NoteBadge extends StatefulWidget {
   _NoteBadgeState createState() => _NoteBadgeState();
 }
 
-class _NoteBadgeState extends State<NoteBadge> {
+class _NoteBadgeState extends State<NoteBadge> with
+    SingleTickerProviderStateMixin {
+  late double _scale;
+  late AnimationController _controller;
+
+  bool _canVibrate = true;
+
+  init() async {
+    bool canVibrate = await Vibrate.canVibrate;
+    setState(() {
+      _canVibrate = canVibrate;
+      _canVibrate
+          ? print("This device can vibrate")
+          : print("This device cannot vibrate");
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    init();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 250,
+      ),
+      lowerBound: 0.0,
+      upperBound: 0.5,
+    )..addListener(() {
+      setState(() {
+
+      });
+    });
+  }
+
   Color getColor() {
     if (widget.data.showState == ShowState.All ||
         widget.data.showState == ShowState.Colours) {
@@ -242,6 +291,7 @@ class _NoteBadgeState extends State<NoteBadge> {
       return Colors.white;
     }
   }
+
 
   String getNoteText() {
     if (widget.data.showState == ShowState.All ||
@@ -253,16 +303,28 @@ class _NoteBadgeState extends State<NoteBadge> {
   }
 
 
-
   @override
   Widget build(BuildContext context) {
+    _scale = 1.0 - _controller.value;
     return Center(
         child: GestureDetector(
-          onTap: () {
-            engine.play(widget.data.noteData.midi);
+          onTapUp: (TapUpDetails details) {
+            _controller.reverse();
           },
-          child: Badge(badgeColor: getColor(),
-            badgeContent: SizedBox(width: 24, height: 24, child: Center(child: Text(getNoteText()))), elevation: 4,),
+          onTapDown: (TapDownDetails details) {
+            if(_canVibrate && !engine.noHaptic()) {
+              Vibrate.vibrate();
+            }
+            engine.play(widget.data.noteData.midi);
+            _controller.forward();
+          },
+          child: Transform.scale(
+            scale: _scale,
+            child: Badge(badgeColor: getColor(),
+              toAnimate: true,
+              animationType: BadgeAnimationType.scale,
+              badgeContent: SizedBox(width: 24, height: 24, child: Center(child: Text(getNoteText()))), elevation: 4,),
+          ),
         ));
   }
 }
