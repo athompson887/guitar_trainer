@@ -29,8 +29,6 @@ class _HomePageState extends State<HomePage> {
   String path = "assets/sounds/";
   int initialIndex = 0;
 
-
-
   @override
   void initState() {
 
@@ -79,8 +77,9 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    Expanded(
-                        flex: 1,
+                    SizedBox(
+                        height: bottomBarHeight,
+                        width: displayWidth(context),
                         child: Container(
                           color: Colors.brown,
                           child: ButtonBar(
@@ -506,8 +505,9 @@ class _BridgeState extends State<Bridge> {
             ],
           ),
       ),
-      Expanded(
-        flex: 1,
+      SizedBox(
+        height: bottomBarHeight,
+        width: bridgeWidth,
         child: Container(color: Colors.brown,
         child: Row(
           children: [

@@ -6,6 +6,7 @@ const double fretIndexHeight = 20.0;
 const int numFrets = 16;
 const int numStrings = 6;
 
+const double bottomBarHeight = 60;
 const double bridgeWidth = 60;
 const double fretWireWidth = 4;
 const double fretWireCentreWidth = 1;
