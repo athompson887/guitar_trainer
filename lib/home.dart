@@ -10,6 +10,7 @@ import 'note.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 var engine = Engine();
 var scaffoldKey = GlobalKey<ScaffoldState>();
@@ -31,7 +32,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-
     engine.flutterMidi.unmute();
     rootBundle.load(path+fileName).then((sf2) {
       engine.flutterMidi.prepare(sf2: sf2, name: fileName);
@@ -50,31 +50,22 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: Colors.white,
           body: Row(
             children: [
-              Bridge(),
+             // Bridge(),
+              Fret(fretPos: 0,isNut: true,),
               Expanded(
                 child: Column(
                   children: [
                     Expanded(
                       flex: mainFlex,
-                      child: ListView(
+                      child: ScrollablePositionedList.builder(
+                        itemScrollController: engine.itemScrollController,
+                        itemPositionsListener: engine.itemPositionsListener,
+                        physics: const NeverScrollableScrollPhysics(),
                         scrollDirection: Axis.horizontal,
-                        children:  <Widget>[
-                          Fret(fretPos: 1),
-                          Fret(fretPos: 2),
-                          Fret(fretPos: 3),
-                          Fret(fretPos: 4),
-                          Fret(fretPos: 5),
-                          Fret(fretPos: 6),
-                          Fret(fretPos: 7),
-                          Fret(fretPos: 8),
-                          Fret(fretPos: 9),
-                          Fret(fretPos: 10),
-                          Fret(fretPos: 11),
-                          Fret(fretPos: 12),
-                          Fret(fretPos: 13),
-                          Fret(fretPos: 14),
-                          Fret(fretPos: 15),
-                        ],
+                        itemCount: 15,
+                        itemBuilder: (BuildContext context, int index) {
+                          return  Fret(fretPos: index+1);
+                        },
                       ),
                     ),
                     SizedBox(
@@ -140,7 +131,13 @@ class _HomePageState extends State<HomePage> {
                                   style: TextButton.styleFrom(
                                       side: const BorderSide(color: Colors.white),
                                       primary: Colors.white),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    if(engine.currentNeckPosition==0) {
+                                      engine.jumpToPosition(6);
+                                    } else {
+                                      engine.jumpToPosition(0);
+                                    }
+                                  },
                                   child: const Text("Train"),
                                 ),
                               ),
@@ -195,8 +192,9 @@ class _HomePageState extends State<HomePage> {
 
 class Fret extends StatefulWidget {
   final int fretPos;
+  final bool isNut;
 
-  Fret({Key? key, required this.fretPos}) : super(key: key);
+  Fret({Key? key, required this.fretPos,this.isNut = false}) : super(key: key);
 
   @override
   _FretState createState() => _FretState();
@@ -206,7 +204,7 @@ class _FretState extends State<Fret> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: (displayWidth(context)-bridgeWidth)/numVisibleFrets,
+      width: widget.isNut ? bridgeWidth : (displayWidth(context)-bridgeWidth)/numVisibleFrets,
       child: Row(
         children: [
           Expanded(
@@ -220,15 +218,54 @@ class _FretState extends State<Fret> {
                 SingleFret(stringPos: 3, fretPos: widget.fretPos),
                 SingleFret(stringPos: 4, fretPos: widget.fretPos),
                 SingleFret(stringPos: 5, fretPos: widget.fretPos),
+                Visibility(
+                  visible: widget.isNut,
+                    child: const MenuDrawButton()),
               ],
             ),
           ),
-          FretWire(),
+          const FretWire(),
         ],
       ),
     );
   }
 }
+
+class MenuDrawButton extends StatefulWidget {
+  const MenuDrawButton({Key? key}) : super(key: key);
+
+  @override
+  _MenuDrawButtonState createState() => _MenuDrawButtonState();
+}
+
+class _MenuDrawButtonState extends State<MenuDrawButton> {
+  @override
+  Widget build(BuildContext context) {
+    return  SizedBox(
+      height: bottomBarHeight,
+      width: bridgeWidth,
+      child: Container(color: Colors.brown,
+        child: Row(
+          children: [
+            Center(
+              child: IconButton(
+                  icon: const Icon(
+                    Icons.menu,
+                    color: Colors.white,
+                  ),
+                  tooltip: 'Open Menu',
+                  onPressed: () {
+                    setState(() {
+                      scaffoldKey.currentState?.openDrawer();
+                    });
+                  }),
+            ),
+          ],
+        ),
+      ));
+  }
+}
+
 
 class NoteBadge extends StatefulWidget {
   final FretData data;
@@ -241,44 +278,12 @@ class NoteBadge extends StatefulWidget {
   _NoteBadgeState createState() => _NoteBadgeState();
 }
 
-class _NoteBadgeState extends State<NoteBadge> with
-    SingleTickerProviderStateMixin {
-  late double _scale;
-  late AnimationController _controller;
+class _NoteBadgeState extends State<NoteBadge> {
 
-  bool _canVibrate = true;
-
-  init() async {
-    bool canVibrate = await Vibrate.canVibrate;
-    setState(() {
-      _canVibrate = canVibrate;
-      _canVibrate
-          ? print("This device can vibrate")
-          : print("This device cannot vibrate");
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    init();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(
-        milliseconds: 250,
-      ),
-      lowerBound: 0.0,
-      upperBound: 0.5,
-    )..addListener(() {
-      setState(() {
-
-      });
-    });
-  }
 
   Color getColor() {
-    if (widget.data.showState == ShowState.All ||
-        widget.data.showState == ShowState.Colours) {
+    if (widget.data.showState == ShowState.all ||
+        widget.data.showState == ShowState.colours) {
       return widget.data.noteData.color;
     } else {
       return Colors.white;
@@ -287,8 +292,8 @@ class _NoteBadgeState extends State<NoteBadge> with
 
 
   String getNoteText() {
-    if (widget.data.showState == ShowState.All ||
-        widget.data.showState == ShowState.Notes) {
+    if (widget.data.showState == ShowState.all ||
+        widget.data.showState == ShowState.notes) {
       return widget.data.noteData.text;
     } else {
       return "";
@@ -298,27 +303,14 @@ class _NoteBadgeState extends State<NoteBadge> with
 
   @override
   Widget build(BuildContext context) {
-    _scale = 1.0 - _controller.value;
     return Center(
-        child: GestureDetector(
-          onTapUp: (TapUpDetails details) {
-            _controller.reverse();
-          },
-          onTapDown: (TapDownDetails details) {
-            if(_canVibrate && !engine.noHaptic()) {
-              Vibrate.vibrate();
-            }
-            engine.play(widget.data.noteData.midi);
-            _controller.forward();
-          },
-          child: Transform.scale(
-            scale: _scale,
+          child: IgnorePointer(
             child: Badge(badgeColor: getColor(),
-              toAnimate: true,
-              animationType: BadgeAnimationType.scale,
+              toAnimate: false,
               badgeContent: SizedBox(width: 24, height: 24, child: Center(child: Text(getNoteText()))), elevation: 4,),
           ),
-        ));
+       // )//);
+    );
   }
 }
 
@@ -356,7 +348,27 @@ class SingleFret extends StatefulWidget {
 }
 
 class _SingleFretState extends State<SingleFret> {
+
+  bool _canVibrate = true;
+
+  init() async {
+    bool canVibrate = await Vibrate.canVibrate;
+    setState(() {
+      _canVibrate = canVibrate;
+    });
+  }
+
   Color getFretColour() {
+    if(getResultState()==ResultState.incorrect)
+    {
+      resetAfterDelay();
+      return Colors.red.shade400;
+    }
+    if(getResultState()==ResultState.correct)
+    {
+      resetAfterDelay();
+      return Colors.green.shade400;
+    }
     if (widget.stringPos == 0) {
       return Colors.brown.shade800;
     } else if (widget.stringPos == 1) {
@@ -370,6 +382,19 @@ class _SingleFretState extends State<SingleFret> {
     } else {
       return Colors.brown.shade300;
     }
+  }
+
+  resetAfterDelay()
+  {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        engine.resetResultState(getNoteData());
+      });
+    });
+  }
+
+  ResultState getResultState() {
+    return engine.data[widget.stringPos][widget.fretPos].noteData.resultState;
   }
 
   Note getNote() {
@@ -392,13 +417,30 @@ class _SingleFretState extends State<SingleFret> {
     return engine.data[widget.stringPos][widget.fretPos];
   }
 
+  NoteData getNoteData() {
+    return engine.data[widget.stringPos][widget.fretPos].noteData;
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return Expanded(
       child: Stack(
         children: [
-          Container(
-            color: getFretColour(),
+          GestureDetector(
+            onTapDown: (TapDownDetails details) {
+              if(_canVibrate && !engine.noHaptic()) {
+                Vibrate.vibrate();
+              }
+              engine.play(getNoteData().midi);
+
+              setState(() {
+                engine.checkAnswer(getNoteData());
+              });
+            },
+            child: Container(
+              color: getFretColour(),
+            ),
           ),
           Visibility(
               visible: getVisibility(),
@@ -411,7 +453,7 @@ class _SingleFretState extends State<SingleFret> {
 }
 
 class FretWire extends StatelessWidget {
-  FretWire({
+  const FretWire({
     Key? key,
   }) : super(key: key);
 
