@@ -11,10 +11,12 @@ import 'package:toggle_switch/toggle_switch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 var engine = Engine();
 var scaffoldKey = GlobalKey<ScaffoldState>();
-int mainFlex = 6;
+int mainFlex = 1;
+
 class HomePage extends StatefulWidget {
   final String title;
 
@@ -33,7 +35,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     engine.flutterMidi.unmute();
-    rootBundle.load(path+fileName).then((sf2) {
+    rootBundle.load(path + fileName).then((sf2) {
       engine.flutterMidi.prepare(sf2: sf2, name: fileName);
     });
     engine.initData();
@@ -50,13 +52,14 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: Colors.white,
           body: Row(
             children: [
-             // Bridge(),
-              Fret(fretPos: 0,isNut: true,),
+              Fret(
+                fretPos: engine.currentNeckPosition,
+                isNut: true,
+              ),
               Expanded(
                 child: Column(
                   children: [
                     Expanded(
-                      flex: mainFlex,
                       child: ScrollablePositionedList.builder(
                         itemScrollController: engine.itemScrollController,
                         itemPositionsListener: engine.itemPositionsListener,
@@ -64,7 +67,7 @@ class _HomePageState extends State<HomePage> {
                         scrollDirection: Axis.horizontal,
                         itemCount: 15,
                         itemBuilder: (BuildContext context, int index) {
-                          return  Fret(fretPos: index+1);
+                          return Fret(fretPos: index + 1);
                         },
                       ),
                     ),
@@ -83,60 +86,54 @@ class _HomePageState extends State<HomePage> {
                                 ],
                                 onPressed: (int index) {
                                   setState(() {
-                                    engine.selections[index] = !engine.selections[index];
+                                    engine.selections[index] =
+                                        !engine.selections[index];
                                   });
                                 },
                                 isSelected: engine.selections,
                               ),
                               // Here, default theme colors are used for activeBgColor, activeFgColor, inactiveBgColor and inactiveFgColor
-                              ToggleSwitch(
-                                initialLabelIndex: initialIndex,
-                                totalSwitches: 4,
-                                activeBgColors: const [
-                                  [Colors.green],
-                                  [Colors.blue],
-                                  [Colors.red],
-                                  [Colors.black]
-                                ],
-                                labels: const ['All', 'Notes', 'Colours', 'None'],
-                                onToggle: (index) {
-                                  setState(() {
-                                    initialIndex = index;
-                                    engine.setShowState(ShowState.values[index]);
-                                  });
-                                },
-                              ),
                               Visibility(
-                                visible: true,
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                      side: const BorderSide(color: Colors.white),
-                                      primary: Colors.white),
-                                  onPressed: () {
+                                visible: engine.currentGameState==GameState.learn || engine.currentGameState==GameState.aural ? true : false,
+                                child: ToggleSwitch(
+                                  initialLabelIndex: initialIndex,
+                                  totalSwitches: 4,
+                                  activeBgColors: const [
+                                    [Colors.green],
+                                    [Colors.blue],
+                                    [Colors.red],
+                                    [Colors.black]
+                                  ],
+                                  labels: const [
+                                    'All',
+                                    'Notes',
+                                    'Colours',
+                                    'None'
+                                  ],
+                                  onToggle: (index) {
                                     setState(() {
-                                      if(engine.visibility==false) {
-                                        engine.showAllNotes();
-                                      }
-                                      else {
-                                          engine.hideAllNotes();
-                                      }
+                                      initialIndex = index;
+                                      engine
+                                          .setShowState(ShowState.values[index]);
                                     });
                                   },
-                                  child: Text(engine.visibility ? "Hide" : "Show"),
                                 ),
                               ),
                               Visibility(
-                                visible: true,
+                                visible: engine.currentGameState==GameState.learn || engine.currentGameState==GameState.aural ? true : false,
                                 child: TextButton(
                                   style: TextButton.styleFrom(
-                                      side: const BorderSide(color: Colors.white),
+                                      side:
+                                          const BorderSide(color: Colors.white),
                                       primary: Colors.white),
                                   onPressed: () {
-                                    if(engine.currentNeckPosition==0) {
-                                      engine.jumpToPosition(6);
-                                    } else {
-                                      engine.jumpToPosition(0);
-                                    }
+                                    setState(() {
+                                      if (engine.currentNeckPosition == 0) {
+                                        engine.jumpToPosition(6);
+                                      } else {
+                                        engine.jumpToPosition(0);
+                                      }
+                                    });
                                   },
                                   child: const Text("Train"),
                                 ),
@@ -157,28 +154,56 @@ class _HomePageState extends State<HomePage> {
               // Important: Remove any padding from the ListView.
               padding: EdgeInsets.zero,
               children: [
-                const DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Colors.brown,
+                const SizedBox(
+                  height: 100,
+                  child: DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Colors.brown,
+                    ),
+                    child: Text("DON'T FRET",
+                        style: TextStyle(
+                            fontFamily: fontRegular,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: fontSizeLargeXXX),
+                        textAlign: TextAlign.left),
                   ),
-                  child: Text('Learn'),
                 ),
                 ListTile(
-                  title: const Text('By Position'),
+                  title: const Text('Learn the fretboard'),
+                  subtitle: const Text(
+                      'Memorize note positions using our positive reinforcing learning system.'),
+                  leading: const FaIcon(FontAwesomeIcons.magic),
                   onTap: () {
-                    // Update the state of the app
-                    // ...
-                    // Then close the drawer
-                    Navigator.pop(context);
+                    setState(() {
+                      engine.currentGameState = GameState.learn;
+                    });
+                    scaffoldKey.currentState?.openEndDrawer();
                   },
                 ),
                 ListTile(
-                  title: const Text('Down the neck'),
+                  title: const Text('Remember Me'),
+                  subtitle: const Text(
+                      'Follow the sequence of the notes and see how many you can remember.'),
+                  leading: const FaIcon(FontAwesomeIcons.gamepad),
                   onTap: () {
-                    // Update the state of the app
-                    // ...
-                    // Then close the drawer
-                    Navigator.pop(context);
+                    setState(() {
+                      engine.currentGameState = GameState.remember;
+                    });
+                    scaffoldKey.currentState?.openEndDrawer();
+                  },
+                ),
+                ListTile(
+                  title: const Text('Aural Practice'),
+                  subtitle: const Text(
+                      'Listen to the notes and repeat, to improve your musical awareness.'),
+                  leading:
+                      const FaIcon(FontAwesomeIcons.assistiveListeningSystems),
+                  onTap: () {
+                    setState(() {
+                      engine.currentGameState = GameState.aural;
+                    });
+                    scaffoldKey.currentState?.openEndDrawer();
                   },
                 ),
               ],
@@ -194,7 +219,7 @@ class Fret extends StatefulWidget {
   final int fretPos;
   final bool isNut;
 
-  Fret({Key? key, required this.fretPos,this.isNut = false}) : super(key: key);
+  const Fret({Key? key, required this.fretPos, this.isNut = false}) : super(key: key);
 
   @override
   _FretState createState() => _FretState();
@@ -204,23 +229,51 @@ class _FretState extends State<Fret> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: widget.isNut ? bridgeWidth : (displayWidth(context)-bridgeWidth)/numVisibleFrets,
+      width: widget.isNut
+          ? bridgeWidth
+          : (displayWidth(context) - bridgeWidth) / numVisibleFrets,
       child: Row(
         children: [
           Expanded(
-            flex:1,
+            flex: 1,
             child: Column(
               children: [
-                FretIndex(fretPos: widget.fretPos),
-                SingleFret(stringPos: 0, fretPos: widget.fretPos),
-                SingleFret(stringPos: 1, fretPos: widget.fretPos),
-                SingleFret(stringPos: 2, fretPos: widget.fretPos),
-                SingleFret(stringPos: 3, fretPos: widget.fretPos),
-                SingleFret(stringPos: 4, fretPos: widget.fretPos),
-                SingleFret(stringPos: 5, fretPos: widget.fretPos),
+                FretIndex(
+                    fretPos: widget.isNut
+                        ? engine.currentNeckPosition
+                        : widget.fretPos),
+                SingleFret(
+                  stringPos: 0,
+                  fretPos: widget.fretPos,
+                  isNut: widget.isNut,
+                ),
+                SingleFret(
+                  stringPos: 1,
+                  fretPos: widget.fretPos,
+                  isNut: widget.isNut,
+                ),
+                SingleFret(
+                  stringPos: 2,
+                  fretPos: widget.fretPos,
+                  isNut: widget.isNut,
+                ),
+                SingleFret(
+                  stringPos: 3,
+                  fretPos: widget.fretPos,
+                  isNut: widget.isNut,
+                ),
+                SingleFret(
+                  stringPos: 4,
+                  fretPos: widget.fretPos,
+                  isNut: widget.isNut,
+                ),
+                SingleFret(
+                  stringPos: 5,
+                  fretPos: widget.fretPos,
+                  isNut: widget.isNut,
+                ),
                 Visibility(
-                  visible: widget.isNut,
-                    child: const MenuDrawButton()),
+                    visible: widget.isNut, child: const MenuDrawButton()),
               ],
             ),
           ),
@@ -241,46 +294,42 @@ class MenuDrawButton extends StatefulWidget {
 class _MenuDrawButtonState extends State<MenuDrawButton> {
   @override
   Widget build(BuildContext context) {
-    return  SizedBox(
-      height: bottomBarHeight,
-      width: bridgeWidth,
-      child: Container(color: Colors.brown,
-        child: Row(
-          children: [
-            Center(
-              child: IconButton(
-                  icon: const Icon(
-                    Icons.menu,
-                    color: Colors.white,
-                  ),
-                  tooltip: 'Open Menu',
-                  onPressed: () {
-                    setState(() {
-                      scaffoldKey.currentState?.openDrawer();
-                    });
-                  }),
-            ),
-          ],
-        ),
-      ));
+    return SizedBox(
+        height: bottomBarHeight,
+        width: bridgeWidth,
+        child: Container(
+          color: Colors.brown,
+          child: Row(
+            children: [
+              Center(
+                child: IconButton(
+                    icon: const Icon(
+                      Icons.menu,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'Open Menu',
+                    onPressed: () {
+                      setState(() {
+                        scaffoldKey.currentState?.openDrawer();
+                      });
+                    }),
+              ),
+            ],
+          ),
+        ));
   }
 }
-
 
 class NoteBadge extends StatefulWidget {
   final FretData data;
 
-  const NoteBadge(
-      {Key? key, required this.data})
-      : super(key: key);
+  const NoteBadge({Key? key, required this.data}) : super(key: key);
 
   @override
   _NoteBadgeState createState() => _NoteBadgeState();
 }
 
 class _NoteBadgeState extends State<NoteBadge> {
-
-
   Color getColor() {
     if (widget.data.showState == ShowState.all ||
         widget.data.showState == ShowState.colours) {
@@ -289,7 +338,6 @@ class _NoteBadgeState extends State<NoteBadge> {
       return Colors.white;
     }
   }
-
 
   String getNoteText() {
     if (widget.data.showState == ShowState.all ||
@@ -300,16 +348,18 @@ class _NoteBadgeState extends State<NoteBadge> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
-          child: IgnorePointer(
-            child: Badge(badgeColor: getColor(),
-              toAnimate: false,
-              badgeContent: SizedBox(width: 24, height: 24, child: Center(child: Text(getNoteText()))), elevation: 4,),
-          ),
-       // )//);
+      child: IgnorePointer(
+        child: Badge(
+          badgeColor: getColor(),
+          toAnimate: false,
+          badgeContent: SizedBox(
+              width: 24, height: 24, child: Center(child: Text(getNoteText()))),
+          elevation: 4,
+        ),
+      ),
     );
   }
 }
@@ -336,11 +386,13 @@ class _FretIndexState extends State<FretIndex> {
 class SingleFret extends StatefulWidget {
   final int fretPos;
   final int stringPos;
+  final bool isNut;
 
   const SingleFret(
       {Key? key,
       required this.stringPos,
-      required this.fretPos})
+      required this.fretPos,
+      this.isNut = false})
       : super(key: key);
 
   @override
@@ -348,7 +400,6 @@ class SingleFret extends StatefulWidget {
 }
 
 class _SingleFretState extends State<SingleFret> {
-
   bool _canVibrate = true;
 
   init() async {
@@ -359,33 +410,61 @@ class _SingleFretState extends State<SingleFret> {
   }
 
   Color getFretColour() {
-    if(getResultState()==ResultState.incorrect)
-    {
+    if (getResultState() == ResultState.incorrect) {
       resetAfterDelay();
       return Colors.red.shade400;
     }
-    if(getResultState()==ResultState.correct)
-    {
+    if (getResultState() == ResultState.correct) {
       resetAfterDelay();
       return Colors.green.shade400;
     }
-    if (widget.stringPos == 0) {
-      return Colors.brown.shade800;
-    } else if (widget.stringPos == 1) {
-      return Colors.brown.shade700;
-    } else if (widget.stringPos == 2) {
-      return Colors.brown.shade600;
-    } else if (widget.stringPos == 3) {
-      return Colors.brown.shade500;
-    } else if (widget.stringPos == 4) {
-      return Colors.brown.shade400;
+    if (!widget.isNut) {
+      if (widget.stringPos == 0) {
+        return Colors.brown.shade800;
+      } else if (widget.stringPos == 1) {
+        return Colors.brown.shade700;
+      } else if (widget.stringPos == 2) {
+        return Colors.brown.shade600;
+      } else if (widget.stringPos == 3) {
+        return Colors.brown.shade500;
+      } else if (widget.stringPos == 4) {
+        return Colors.brown.shade400;
+      } else {
+        return Colors.brown.shade300;
+      }
+    }
+    if (engine.currentNeckPosition == 0) {
+      if (widget.stringPos == 0) {
+        return Colors.grey.shade600;
+      } else if (widget.stringPos == 1) {
+        return Colors.grey.shade500;
+      } else if (widget.stringPos == 2) {
+        return Colors.grey.shade400;
+      } else if (widget.stringPos == 3) {
+        return Colors.grey.shade300;
+      } else if (widget.stringPos == 4) {
+        return Colors.grey.shade200;
+      } else {
+        return Colors.grey.shade100;
+      }
     } else {
-      return Colors.brown.shade300;
+      if (widget.stringPos == 0) {
+        return Colors.yellow.shade600;
+      } else if (widget.stringPos == 1) {
+        return Colors.yellow.shade500;
+      } else if (widget.stringPos == 2) {
+        return Colors.yellow.shade400;
+      } else if (widget.stringPos == 3) {
+        return Colors.yellow.shade300;
+      } else if (widget.stringPos == 4) {
+        return Colors.yellow.shade200;
+      } else {
+        return Colors.yellow.shade100;
+      }
     }
   }
 
-  resetAfterDelay()
-  {
+  resetAfterDelay() {
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
         engine.resetResultState(getNoteData());
@@ -423,13 +502,12 @@ class _SingleFretState extends State<SingleFret> {
 
   @override
   Widget build(BuildContext context) {
-
     return Expanded(
       child: Stack(
         children: [
           GestureDetector(
             onTapDown: (TapDownDetails details) {
-              if(_canVibrate && !engine.noHaptic()) {
+              if (_canVibrate && !engine.noHaptic()) {
                 Vibrate.vibrate();
               }
               engine.play(getNoteData().midi);
@@ -474,116 +552,6 @@ class FretWire extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class Bridge extends StatefulWidget {
-
-  Bridge(
-      {Key? key})
-      : super(key: key);
-
-  @override
-  _BridgeState createState() => _BridgeState();
-}
-
-class _BridgeState extends State<Bridge> {
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: bridgeWidth,
-      child: Column(
-          children: [
-            SizedBox(height: fretIndexHeight,
-              child: Container(color: Colors.brown)),
-
-          Expanded(
-          flex: mainFlex,
-          child:Stack(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children:  const [
-                  BridgeGap(),
-                  BridgeGap(),
-                  BridgeGap(),
-                  BridgeGap(),
-                  BridgeGap(),
-                  BridgeGap(),
-                ],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Visibility(
-                      visible: engine.data[0][0].visibility,
-                      replacement: const SizedBox(width: 24, height: 24),
-                      child: NoteBadge(data: engine.data[0][0])),
-                  Visibility(
-                    visible: engine.data[1][0].visibility,
-                    replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(data: engine.data[1][0]),),
-                  Visibility(
-                    visible: engine.data[2][0].visibility,
-                    replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(data: engine.data[2][0]),),
-                  Visibility(
-                      visible: engine.data[3][0].visibility,
-                      replacement: const SizedBox(width: 24, height: 24),
-                      child: NoteBadge(data: engine.data[3][0])),
-                  Visibility(
-                    visible: engine.data[4][0].visibility,
-                    replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(data: engine.data[4][0]), ),
-                  Visibility(
-                    visible: engine.data[5][0].visibility,
-                    replacement: const SizedBox(width: 24, height: 24),
-                    child: NoteBadge(data: engine.data[5][0]),
-                  ),
-                ],
-              ),
-            ],
-          ),
-      ),
-      SizedBox(
-        height: bottomBarHeight,
-        width: bridgeWidth,
-        child: Container(color: Colors.brown,
-        child: Row(
-          children: [
-                Center(
-                  child: IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        color: Colors.white,
-                      ),
-                      tooltip: 'Open Menu',
-                      onPressed: () {
-                        setState(() {
-                          scaffoldKey.currentState?.openDrawer();
-                        });
-                      }),
-                ),
-              ],
-            ),
-        ),),
-      ]));
-  }
-}
-
-class BridgeGap extends StatelessWidget {
-  const BridgeGap({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 6,
-      child: Container(
-        color: darkGrey,
       ),
     );
   }

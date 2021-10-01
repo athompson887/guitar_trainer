@@ -48,6 +48,12 @@ enum ShowState {
   none
 }
 
+enum GameState {
+  learn,
+  remember,
+  aural
+}
+
 class Engine {
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
@@ -62,6 +68,7 @@ class Engine {
   static final Engine theOne = Engine._internal();
   factory Engine() => theOne;
   bool visibility = true;
+  GameState currentGameState = GameState.learn;
   // private, named constructor
   Engine._internal();
 

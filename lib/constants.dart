@@ -13,13 +13,24 @@ const double fretWireCentreWidth = 1;
 const double numVisibleFrets = 5;
 
 const appTitle = 'My Guitar Tool';
-const bool TEST_MODE = false;
+const bool testMode = false;
 
-const String OK="Ok";
+const String oK="Ok";
 
-const String FONT_REGULAR = "oxygen_regular";
-const String FONT_LIGHT = "oxygen_light";
-const String FONT_BOLD = "oxygen-bold";
+
+const String fontRegular = "oxygen_regular";
+const String fontLight = "oxygen_light";
+const String fontBold = "oxygen-bold";
+
+const double fontSizeLargeXXX = 30.0;
+const double fontSizeLargeXX = 20.0;
+const double fontSizeLargeX = 18.0;
+const double fontSizeLarge = 16.0;
+const double fontSizeMedium = 14.0;
+const double fontSizeSmall = 12.0;
+const double fontSizeSmallX = 10.0;
+const double fontSizeSmallXX = 8.0;
+const double fontSizeSmallXXX = 6.0;
 
 const Icon editIcon = Icon(Icons.edit,color: Colors.white, size: 32);
 
