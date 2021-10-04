@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'constants.dart';
@@ -39,22 +40,40 @@ enum ResultState {
   incorrect,
   none
 }
-
-
 enum ShowState {
   all,
   notes,
   colours,
   none
 }
-
+enum FretGroups {
+  zero,
+  five,
+  seven,
+  eleven,
+}
 enum GameState {
   learn,
   remember,
   aural
 }
+enum EngineState {
+  notStarted,
+  started,
+  showNote,
+  none,
+  paused,
+  unpause
+}
 
 class Engine {
+
+  int fretGroupIndex = 0;
+  bool showFretRange = true;
+
+  int initialIndex = 0;
+  var random = Random();
+
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
 
@@ -69,10 +88,12 @@ class Engine {
   factory Engine() => theOne;
   bool visibility = true;
   GameState currentGameState = GameState.learn;
+  EngineState engineState = EngineState.notStarted;
+  EngineState showNoteState = EngineState.none;
   // private, named constructor
   Engine._internal();
 
-  NoteData? currentTestNote;
+  NoteData currentTestNote = NoteData(note:Note.E, text: NoteHelper.noteText(note:Note.E),midi:Pitch.parse('E5').midiNumber,color:NoteHelper.noteColour(note:Note.E));
 
   var eString = [];
   var bString = [];
@@ -81,9 +102,11 @@ class Engine {
   var aString = [];
   var eStringLow = [];
   int currentNeckPosition = 0;
-
+  int currentString = 0;
   var data = [];
   List<bool> selections = List.generate(2,(_) => false);
+
+  List<bool> fretRanges = List.generate(5,(_) => false);
 
   final flutterMidi = FlutterMidi();
 
@@ -97,6 +120,82 @@ class Engine {
     return selections[1];
   }
 
+  void nextTestNote()
+  {
+      int nFrets = numVisibleFrets.toInt()+1;
+      int rnd = random.nextInt(nFrets* 6);
+      FretData? fretData;
+      if(rnd <= nFrets)
+      {
+        fretData = engine.data[0][rnd];
+        currentString = 1;
+      }
+      else if(rnd <= nFrets*2)
+      {
+        fretData = engine.data[1][rnd-nFrets];
+        currentString = 2;
+      }
+      else if(rnd <= nFrets*3)
+      {
+        fretData = engine.data[2][rnd-(nFrets*2)];
+        currentString = 3;
+      }
+      else if(rnd <= nFrets*4)
+      {
+        fretData = engine.data[3][rnd-(nFrets*3)];
+        currentString = 4;
+      }
+      else if(rnd <= nFrets*5)
+      {
+        fretData = engine.data[4][rnd-(nFrets*4)];
+        currentString = 5;
+      }
+      else if(rnd <= nFrets*6)
+      {
+        fretData = engine.data[5][rnd-(nFrets*5)];
+        currentString = 6;
+      }
+
+      if(fretData!=null)
+      {
+          engine.currentTestNote = fretData.noteData;
+          engine.showNoteState = EngineState.showNote;
+      }
+
+  }
+  startGame()
+  {
+    engine.engineState = EngineState.started;
+
+    showTestNote();
+  }
+
+  showTestNote()
+  {
+    nextTestNote();
+    engine.showNoteState = EngineState.showNote;
+  }
+
+  hideTestNote()
+  {
+    engine.showNoteState = EngineState.none;
+  }
+
+
+  stopGame()
+  {
+    engine.engineState = EngineState.notStarted;
+  }
+
+  pauseGame()
+  {
+    engine.engineState = EngineState.paused;
+  }
+
+  unpauseGame()
+  {
+    engine.engineState = EngineState.unpause;
+  }
 
 
   initData()

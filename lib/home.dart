@@ -4,18 +4,21 @@ import 'package:flutter/services.dart';
 import 'package:guitar_trainer/colours.dart';
 import 'package:badges/badges.dart';
 import 'package:guitar_trainer/helper.dart';
+import 'package:guitar_trainer/pause_hud.dart';
 import 'constants.dart';
+import 'display_choice_widget.dart';
 import 'engine.dart';
+import 'fret_range_widget.dart';
 import 'note.dart';
-import 'package:toggle_switch/toggle_switch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'options_widget.dart';
+
 var engine = Engine();
 var scaffoldKey = GlobalKey<ScaffoldState>();
-int mainFlex = 1;
 
 class HomePage extends StatefulWidget {
   final String title;
@@ -30,7 +33,6 @@ class _HomePageState extends State<HomePage> {
   //String fileName = 'Piano.sf2';
   String fileName = 'guitar_accoustic.sf2';
   String path = "assets/sounds/";
-  int initialIndex = 0;
 
   @override
   void initState() {
@@ -50,100 +52,261 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
           key: scaffoldKey,
           backgroundColor: Colors.white,
-          body: Row(
+          body: Stack(
             children: [
-              Fret(
-                fretPos: engine.currentNeckPosition,
-                isNut: true,
+              Row(
+                children: [
+                  Fret(
+                    fretPos: engine.currentNeckPosition,
+                    isNut: true,
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ScrollablePositionedList.builder(
+                            itemScrollController: engine.itemScrollController,
+                            itemPositionsListener: engine.itemPositionsListener,
+                            physics: const NeverScrollableScrollPhysics(),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 15,
+                            itemBuilder: (BuildContext context, int index) {
+                              return Fret(fretPos: index + 1);
+                            },
+                          ),
+                        ),
+                        SizedBox(
+                            height: bottomBarHeight,
+                            width: displayWidth(context),
+                            child: Container(
+                              color: Colors.brown,
+                              child: ButtonBar(
+                                alignment: MainAxisAlignment.start,
+                                children: <Widget>[
+                                  const OptionsButtons(),
+                                  Visibility(
+                                    visible: engine.currentGameState ==
+                                                GameState.learn ||
+                                            engine.currentGameState ==
+                                                GameState.aural
+                                        ? true
+                                        : false,
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                          side: const BorderSide(
+                                              color: Colors.white),
+                                          primary: Colors.white),
+                                      onPressed: () {
+                                        setState(() {
+                                          if (engine.currentNeckPosition == 0) {
+                                            engine.jumpToPosition(6);
+                                          } else {
+                                            engine.jumpToPosition(0);
+                                          }
+                                        });
+                                      },
+                                      child: const Text("Train"),
+                                    ),
+                                  ),
+                                  Visibility(
+                                    visible: engine.engineState !=
+                                        EngineState.notStarted,
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                          side: const BorderSide(
+                                              color: Colors.white),
+                                          primary: Colors.white),
+                                      onPressed: () {
+                                        setState(() {
+                                          engine.stopGame();
+                                        });
+                                      },
+                                      child: const Text("Stop Game"),
+                                    ),
+                                  ),
+                                  Visibility(
+                                    visible: engine.engineState !=
+                                        EngineState.notStarted,
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                          side: const BorderSide(
+                                              color: Colors.white),
+                                          primary: Colors.white),
+                                      onPressed: () {
+                                        setState(() {
+                                          engine.pauseGame();
+                                        });
+                                      },
+                                      child: const Text("Pause Game"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ))
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ScrollablePositionedList.builder(
-                        itemScrollController: engine.itemScrollController,
-                        itemPositionsListener: engine.itemPositionsListener,
-                        physics: const NeverScrollableScrollPhysics(),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 15,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Fret(fretPos: index + 1);
-                        },
+              Visibility(
+                visible: engine.engineState == EngineState.notStarted,
+                child: Container(
+                  color: Colors.black87,
+                  child: Center(
+                    child: Container(
+                      height: 300,
+                      width: 400,
+                      color: Colors.black,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Visibility(
+                              visible: engine.showFretRange,
+                              child: const Padding(
+                                padding: EdgeInsets.only(left: 40),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "Fret Range",
+                                    style: TextStyle(
+                                        fontFamily: fontRegular,
+                                        fontSize: fontSizeMedium,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Visibility(
+                              visible: engine.showFretRange,
+                              child: const FretRange(),
+                            ),
+                            Visibility(
+                              visible: engine.currentGameState ==
+                                          GameState.learn ||
+                                      engine.currentGameState == GameState.aural
+                                  ? true
+                                  : false,
+                              child: const Padding(
+                                padding: EdgeInsets.only(left: 40),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "View Options",
+                                    style: TextStyle(
+                                        fontFamily: fontRegular,
+                                        fontSize: fontSizeMedium,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Visibility(
+                              visible: engine.currentGameState ==
+                                          GameState.learn ||
+                                      engine.currentGameState == GameState.aural
+                                  ? true
+                                  : false,
+                              child: const DisplayChoice(),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                  side: const BorderSide(color: Colors.white),
+                                  primary: Colors.white),
+                              onPressed: () {
+                                setState(() {
+                                  engine.startGame();
+                                });
+                              },
+                              child: const Text(
+                                "Start",
+                                style: TextStyle(
+                                    fontFamily: fontRegular,
+                                    fontSize: fontSizeLargeXX,
+                                    color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    SizedBox(
-                        height: bottomBarHeight,
-                        width: displayWidth(context),
-                        child: Container(
-                          color: Colors.brown,
-                          child: ButtonBar(
-                            alignment: MainAxisAlignment.start,
-                            children: <Widget>[
-                              ToggleButtons(
-                                children: const <Widget>[
-                                  Icon(Icons.volume_mute_sharp),
-                                  Icon(Icons.vibration)
-                                ],
-                                onPressed: (int index) {
-                                  setState(() {
-                                    engine.selections[index] =
-                                        !engine.selections[index];
-                                  });
-                                },
-                                isSelected: engine.selections,
-                              ),
-                              // Here, default theme colors are used for activeBgColor, activeFgColor, inactiveBgColor and inactiveFgColor
-                              Visibility(
-                                visible: engine.currentGameState==GameState.learn || engine.currentGameState==GameState.aural ? true : false,
-                                child: ToggleSwitch(
-                                  initialLabelIndex: initialIndex,
-                                  totalSwitches: 4,
-                                  activeBgColors: const [
-                                    [Colors.green],
-                                    [Colors.blue],
-                                    [Colors.red],
-                                    [Colors.black]
-                                  ],
-                                  labels: const [
-                                    'All',
-                                    'Notes',
-                                    'Colours',
-                                    'None'
-                                  ],
-                                  onToggle: (index) {
-                                    setState(() {
-                                      initialIndex = index;
-                                      engine
-                                          .setShowState(ShowState.values[index]);
-                                    });
-                                  },
-                                ),
-                              ),
-                              Visibility(
-                                visible: engine.currentGameState==GameState.learn || engine.currentGameState==GameState.aural ? true : false,
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                      side:
-                                          const BorderSide(color: Colors.white),
-                                      primary: Colors.white),
-                                  onPressed: () {
-                                    setState(() {
-                                      if (engine.currentNeckPosition == 0) {
-                                        engine.jumpToPosition(6);
-                                      } else {
-                                        engine.jumpToPosition(0);
-                                      }
-                                    });
-                                  },
-                                  child: const Text("Train"),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ))
-                  ],
+                  ),
                 ),
               ),
+              PauseHUD(), //should not be a const
+              Visibility(
+                  visible: engine.engineState == EngineState.paused,
+                  child: Container(
+                      color: Colors.black87,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                                side: const BorderSide(color: Colors.white),
+                                primary: Colors.white),
+                            onPressed: () {
+                              setState(() {
+                                engine.startGame();
+                              });
+                            },
+                            child: const Text(
+                              "Paused",
+                              style: TextStyle(
+                                  fontFamily: fontRegular,
+                                  fontSize: fontSizeLargeXX,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ))),
+              Visibility(
+                  visible: engine.showNoteState == EngineState.showNote,
+                  child: Center(
+                    child: Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.white,
+                            ),
+                            color: Colors.black87,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(20))),
+                        width: 150,
+                        height: 150,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                const Text(
+                                  "Play",
+                                  style: TextStyle(
+                                      fontFamily: fontRegular,
+                                      fontSize: fontSizeLarge,
+                                      color: Colors.white),
+                                ),
+                                Text(
+                                  engine.currentTestNote.text,
+                                  style: const TextStyle(
+                                      fontFamily: fontRegular,
+                                      fontSize: fontSizeLargeXXX,
+                                      color: Colors.white),
+                                ),
+                                Text(
+                                  "String " + engine.currentString.toString(),
+                                  style: const TextStyle(
+                                      fontFamily: fontRegular,
+                                      fontSize: fontSizeLarge,
+                                      color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+                  ))
             ],
           ),
           drawer: Drawer(
@@ -219,7 +382,8 @@ class Fret extends StatefulWidget {
   final int fretPos;
   final bool isNut;
 
-  const Fret({Key? key, required this.fretPos, this.isNut = false}) : super(key: key);
+  const Fret({Key? key, required this.fretPos, this.isNut = false})
+      : super(key: key);
 
   @override
   _FretState createState() => _FretState();
@@ -464,6 +628,14 @@ class _SingleFretState extends State<SingleFret> {
     }
   }
 
+  getNextNoteAfterDelay() {
+    // Future.delayed(const Duration(milliseconds: 500), () {
+    //    setState(() {
+    engine.nextTestNote();
+    //   });
+    //  });
+  }
+
   resetAfterDelay() {
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
@@ -514,7 +686,11 @@ class _SingleFretState extends State<SingleFret> {
 
               setState(() {
                 engine.checkAnswer(getNoteData());
+                engine.hideTestNote();
+               // getNextNoteAfterDelay();
               });
+
+
             },
             child: Container(
               color: getFretColour(),

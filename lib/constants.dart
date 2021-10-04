@@ -12,6 +12,8 @@ const double fretWireWidth = 4;
 const double fretWireCentreWidth = 1;
 const double numVisibleFrets = 5;
 
+const int showNoteMS = 2000;
+
 const appTitle = 'My Guitar Tool';
 const bool testMode = false;
 
