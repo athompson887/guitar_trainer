@@ -161,8 +161,8 @@ class Engine {
           engine.currentTestNote = fretData.noteData;
           engine.showNoteState = EngineState.showNote;
       }
-
   }
+
   startGame()
   {
     engine.engineState = EngineState.started;
@@ -180,7 +180,6 @@ class Engine {
   {
     engine.showNoteState = EngineState.none;
   }
-
 
   stopGame()
   {

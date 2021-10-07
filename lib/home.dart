@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:guitar_trainer/colours.dart';
 import 'package:badges/badges.dart';
 import 'package:guitar_trainer/helper.dart';
-import 'package:guitar_trainer/pause_hud.dart';
 import 'constants.dart';
 import 'display_choice_widget.dart';
 import 'engine.dart';
@@ -19,6 +18,7 @@ import 'options_widget.dart';
 
 var engine = Engine();
 var scaffoldKey = GlobalKey<ScaffoldState>();
+_HomePageState? homeState;
 
 class HomePage extends StatefulWidget {
   final String title;
@@ -26,7 +26,7 @@ class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.title}) : super(key: key);
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomePageState createState() =>  _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
@@ -36,6 +36,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    homeState = this;
     engine.flutterMidi.unmute();
     rootBundle.load(path + fileName).then((sf2) {
       engine.flutterMidi.prepare(sf2: sf2, name: fileName);
@@ -148,6 +149,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
+              //Start HUD
               Visibility(
                 visible: engine.engineState == EngineState.notStarted,
                 child: Container(
@@ -236,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              PauseHUD(), //should not be a const
+              //Pause HUD
               Visibility(
                   visible: engine.engineState == EngineState.paused,
                   child: Container(
@@ -263,8 +265,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ))),
+              //Show Note
               Visibility(
-                  visible: engine.showNoteState == EngineState.showNote,
+                  visible: engine.showNoteState == EngineState.showNote && engine.engineState ==EngineState.started,
                   child: Center(
                     child: Container(
                         decoration: BoxDecoration(
@@ -629,11 +632,12 @@ class _SingleFretState extends State<SingleFret> {
   }
 
   getNextNoteAfterDelay() {
-    // Future.delayed(const Duration(milliseconds: 500), () {
-    //    setState(() {
+     Future.delayed(const Duration(milliseconds: 500), () {
+        homeState?.setState(() {
+
     engine.nextTestNote();
-    //   });
-    //  });
+       });
+      });
   }
 
   resetAfterDelay() {
@@ -686,9 +690,14 @@ class _SingleFretState extends State<SingleFret> {
 
               setState(() {
                 engine.checkAnswer(getNoteData());
-                engine.hideTestNote();
-               // getNextNoteAfterDelay();
+
+                homeState?.setState(() {
+                  engine.hideTestNote();
+                  getNextNoteAfterDelay();
+                });
               });
+
+
 
 
             },
