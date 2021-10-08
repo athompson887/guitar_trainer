@@ -67,6 +67,9 @@ enum EngineState {
 }
 
 class Engine {
+  double screenWidth = 0;
+  double safePaddingLeft = 0;
+  double safePaddingRight = 0;
 
   int fretGroupIndex = 0;
   bool showFretRange = true;
@@ -122,7 +125,7 @@ class Engine {
 
   void nextTestNote()
   {
-      int nFrets = numVisibleFrets.toInt()+1;
+      int nFrets = numVisibleFrets.toInt();
       int rnd = random.nextInt(nFrets* 6);
       FretData? fretData;
       if(rnd <= nFrets)

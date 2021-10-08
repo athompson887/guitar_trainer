@@ -5,6 +5,7 @@ import 'package:guitar_trainer/colours.dart';
 import 'package:badges/badges.dart';
 import 'package:guitar_trainer/helper.dart';
 import 'constants.dart';
+import 'constants.dart';
 import 'display_choice_widget.dart';
 import 'engine.dart';
 import 'fret_range_widget.dart';
@@ -47,6 +48,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    engine.screenWidth = displayWidth(context);
+    engine.safePaddingLeft = MediaQuery.of(context).padding.left;
+    engine.safePaddingRight = MediaQuery.of(context).padding.right;
+    engine.screenWidth -= (engine.safePaddingLeft + engine.safePaddingRight);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SafeArea(
@@ -78,7 +83,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         SizedBox(
                             height: bottomBarHeight,
-                            width: displayWidth(context),
+                            width: engine.screenWidth,
                             child: Container(
                               color: Colors.brown,
                               child: ButtonBar(
@@ -398,7 +403,7 @@ class _FretState extends State<Fret> {
     return SizedBox(
       width: widget.isNut
           ? bridgeWidth
-          : (displayWidth(context) - bridgeWidth) / numVisibleFrets,
+          : (engine.screenWidth - bridgeWidth) / numVisibleFrets,
       child: Row(
         children: [
           Expanded(
@@ -631,8 +636,9 @@ class _SingleFretState extends State<SingleFret> {
     }
   }
 
+
   getNextNoteAfterDelay() {
-     Future.delayed(const Duration(milliseconds: 500), () {
+     Future.delayed(const Duration(milliseconds: noteDelayMS), () {
         homeState?.setState(() {
 
     engine.nextTestNote();
@@ -641,7 +647,7 @@ class _SingleFretState extends State<SingleFret> {
   }
 
   resetAfterDelay() {
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: resetDelayMS), () {
       setState(() {
         engine.resetResultState(getNoteData());
       });
@@ -694,6 +700,11 @@ class _SingleFretState extends State<SingleFret> {
                 homeState?.setState(() {
                   engine.hideTestNote();
                   getNextNoteAfterDelay();
+                  Future.delayed(const Duration(milliseconds: noteShowTime), () {
+                    homeState?.setState(() {
+                      engine.hideTestNote();
+                    });
+                  });
                 });
               });
 
