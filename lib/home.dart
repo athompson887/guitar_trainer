@@ -5,16 +5,13 @@ import 'package:guitar_trainer/colours.dart';
 import 'package:badges/badges.dart';
 import 'package:guitar_trainer/helper.dart';
 import 'constants.dart';
-import 'constants.dart';
 import 'display_choice_widget.dart';
 import 'engine.dart';
 import 'fret_range_widget.dart';
 import 'note.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 import 'options_widget.dart';
 
 var engine = Engine();
@@ -27,7 +24,7 @@ class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.title}) : super(key: key);
 
   @override
-  _HomePageState createState() =>  _HomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
@@ -45,6 +42,66 @@ class _HomePageState extends State<HomePage> {
     engine.initData();
     super.initState();
   }
+
+  void startGame()
+  {
+    setState(() {
+      engine.startGame();
+    });
+    hideTestNoteAfterDelay();
+  }
+
+  getNextNoteAfterDelay() {
+    Future.delayed(const Duration(milliseconds: noteDelayMS), () {
+      homeState?.setState(() {
+        engine.nextTestNote();
+        engine.answerTimeMS = -1;
+      });
+    });
+  }
+
+  resetAfterDelay(NoteData noteData) {
+    Future.delayed(const Duration(milliseconds: resetDelayMS), () {
+      setState(() {
+        engine.resetResultState(noteData);
+      });
+    });
+  }
+
+  void showNextNoteAfterDelay() {
+    Future.delayed(const Duration(milliseconds: noteDelayMS),
+            () {
+          homeState?.setState(() {
+            engine.showTestNote();
+            homeState?.hideTestNoteAfterDelay();
+          });
+        });
+  }
+
+  hideTestNoteAfterDelay() {
+    Future.delayed(const Duration(milliseconds: testNoteDialogShowTimeMS), () {
+      setState(() {
+        engine.hideTestNote();
+        engine.startMS =  DateTime.now().millisecondsSinceEpoch;
+      });
+    });
+  }
+
+  hideSpeedResultAfterDelay() {
+    Future.delayed(const Duration(milliseconds: speedResultShowTimeMS), () {
+      setState(() {
+        engine.answerTimeMS = -1;
+      });
+    });
+  }
+
+  bool shouldShowTestNote()
+  {
+    bool res = engine.showNoteState == EngineState.showNote &&
+        engine.engineState == EngineState.started;
+    return res;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -224,9 +281,7 @@ class _HomePageState extends State<HomePage> {
                                   side: const BorderSide(color: Colors.white),
                                   primary: Colors.white),
                               onPressed: () {
-                                setState(() {
-                                  engine.startGame();
-                                });
+                                startGame();
                               },
                               child: const Text(
                                 "Start",
@@ -256,9 +311,7 @@ class _HomePageState extends State<HomePage> {
                                 side: const BorderSide(color: Colors.white),
                                 primary: Colors.white),
                             onPressed: () {
-                              setState(() {
-                                engine.startGame();
-                              });
+                             startGame();
                             },
                             child: const Text(
                               "Paused",
@@ -272,7 +325,7 @@ class _HomePageState extends State<HomePage> {
                       ))),
               //Show Note
               Visibility(
-                  visible: engine.showNoteState == EngineState.showNote && engine.engineState ==EngineState.started,
+                  visible: shouldShowTestNote(),
                   child: Center(
                     child: Container(
                         decoration: BoxDecoration(
@@ -314,7 +367,8 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         )),
-                  ))
+                  )),
+              SpeedWidget(),
             ],
           ),
           drawer: Drawer(
@@ -572,22 +626,14 @@ class SingleFret extends StatefulWidget {
 }
 
 class _SingleFretState extends State<SingleFret> {
-  bool _canVibrate = true;
-
-  init() async {
-    bool canVibrate = await Vibrate.canVibrate;
-    setState(() {
-      _canVibrate = canVibrate;
-    });
-  }
-
   Color getFretColour() {
+    NoteData nd = getNoteData();
     if (getResultState() == ResultState.incorrect) {
-      resetAfterDelay();
+      homeState?.resetAfterDelay(nd);
       return Colors.red.shade400;
     }
     if (getResultState() == ResultState.correct) {
-      resetAfterDelay();
+      homeState?.resetAfterDelay(nd);
       return Colors.green.shade400;
     }
     if (!widget.isNut) {
@@ -636,24 +682,6 @@ class _SingleFretState extends State<SingleFret> {
     }
   }
 
-
-  getNextNoteAfterDelay() {
-     Future.delayed(const Duration(milliseconds: noteDelayMS), () {
-        homeState?.setState(() {
-
-    engine.nextTestNote();
-       });
-      });
-  }
-
-  resetAfterDelay() {
-    Future.delayed(const Duration(milliseconds: resetDelayMS), () {
-      setState(() {
-        engine.resetResultState(getNoteData());
-      });
-    });
-  }
-
   ResultState getResultState() {
     return engine.data[widget.stringPos][widget.fretPos].noteData.resultState;
   }
@@ -689,28 +717,19 @@ class _SingleFretState extends State<SingleFret> {
         children: [
           GestureDetector(
             onTapDown: (TapDownDetails details) {
-              if (_canVibrate && !engine.noHaptic()) {
-                Vibrate.vibrate();
+              //When we are showing the note dialog we do not allow touches
+              if (engine.showNoteState == EngineState.showNote) {
+                return;
               }
-              engine.play(getNoteData().midi);
+              engine.vibrateIfAllowed();
+              engine.playSoundIfAllowed(getNoteData().midi);
 
-              setState(() {
+              homeState?.hideSpeedResultAfterDelay();
+              homeState?.showNextNoteAfterDelay();
+
+              homeState?.setState(() {
                 engine.checkAnswer(getNoteData());
-
-                homeState?.setState(() {
-                  engine.hideTestNote();
-                  getNextNoteAfterDelay();
-                  Future.delayed(const Duration(milliseconds: noteShowTime), () {
-                    homeState?.setState(() {
-                      engine.hideTestNote();
-                    });
-                  });
                 });
-              });
-
-
-
-
             },
             child: Container(
               color: getFretColour(),
@@ -750,5 +769,93 @@ class FretWire extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+
+class SpeedWidget extends StatefulWidget {
+  const SpeedWidget({Key? key}) : super(key: key);
+
+  @override
+  _SpeedWidgetState createState() => _SpeedWidgetState();
+}
+
+class _SpeedWidgetState extends State<SpeedWidget> {
+
+  bool shouldShowSpeedResult()
+  {
+    bool res = engine.answerTimeMS != -1 && engine.correct;
+    return res;
+  }
+
+  Color speedResultColour()
+  {
+    Color res = Colors.red;
+    if(engine.answerTimeMS < fastResponseMS)
+    {
+      res = Colors.green;
+    }
+    else if(engine.answerTimeMS < mediumResponseMS)
+    {
+      res = Colors.orange;
+    }
+    else if(engine.answerTimeMS < slowResponseMS)
+    {
+      res = Colors.red;
+    }
+    return res;
+  }
+
+  String speedResultText()
+  {
+    String res = "Slow";
+    if(engine.answerTimeMS < fastResponseMS)
+    {
+      res = "Fast";
+    }
+    else if(engine.answerTimeMS < mediumResponseMS)
+    {
+      res = "OK";
+    }
+    else if(engine.answerTimeMS < slowResponseMS)
+    {
+      res = "Slow";
+    }
+    return res;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Visibility(
+        visible: shouldShowSpeedResult(),
+        child: Center(
+          child: Container(
+              decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.white,
+                  ),
+                  color: speedResultColour(),
+                  borderRadius:
+                  const BorderRadius.all(Radius.circular(20))),
+              width: 150,
+              height: 150,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        speedResultText(),
+                        style: const TextStyle(
+                            fontFamily: fontRegular,
+                            fontSize: fontSizeLarge,
+                            color: Colors.white),
+                      ),
+
+                    ],
+                  ),
+                ),
+              )),
+        ));
   }
 }

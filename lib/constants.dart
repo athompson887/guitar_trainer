@@ -11,9 +11,13 @@ const double bridgeWidth = 60;
 const double fretWireWidth = 4;
 const double fretWireCentreWidth = 1;
 const double numVisibleFrets = 5;
-const int noteDelayMS = 500;
-const int resetDelayMS = 500;
-const int noteShowTime = 2000;
+const int noteDelayMS = 2000;
+const int resetDelayMS = 1000;
+const int testNoteDialogShowTimeMS = 1000;
+const int speedResultShowTimeMS = 1000;
+const int fastResponseMS = 1000;
+const int mediumResponseMS = 2000;
+const int slowResponseMS = 3000;
 
 const int showNoteMS = 2000;
 

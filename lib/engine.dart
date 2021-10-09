@@ -6,6 +6,7 @@ import 'package:flutter_midi/flutter_midi.dart';
 import 'package:tonic/tonic.dart';
 import 'home.dart';
 import 'note.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class FretData{
@@ -73,6 +74,7 @@ class Engine {
 
   int fretGroupIndex = 0;
   bool showFretRange = true;
+  bool correct = false;
 
   int initialIndex = 0;
   var random = Random();
@@ -106,12 +108,16 @@ class Engine {
   var eStringLow = [];
   int currentNeckPosition = 0;
   int currentString = 0;
+  bool canVibrate = false;
   var data = [];
   List<bool> selections = List.generate(2,(_) => false);
 
   List<bool> fretRanges = List.generate(5,(_) => false);
 
   final flutterMidi = FlutterMidi();
+  int startMS =0;
+  int endMS = 0;
+  int answerTimeMS = -1;//default
 
   bool noSound()
   {
@@ -201,7 +207,7 @@ class Engine {
 
 
   initData()
-  {
+  async {
     data.clear();
     initString(eString, rootNote1);
     initString(bString, rootNote2);
@@ -209,6 +215,8 @@ class Engine {
     initString(dString, rootNote4);
     initString(aString, rootNote5);
     initString(eStringLow, rootNote6);
+
+    canVibrate = await Vibrate.canVibrate;
   }
 
   initString(List frets, NoteData root )
@@ -232,11 +240,20 @@ class Engine {
       data.add(frets);
   }
 
-  void play(int midi) {
+  void playSoundIfAllowed(int midi) {
     if(noSound()) {
       return;
     }
     flutterMidi.playMidiNote(midi: midi);
+  }
+
+  void vibrateIfAllowed() {
+    if(noHaptic()) {
+      return;
+    }
+    if (canVibrate) {
+      Vibrate.vibrate();
+    }
   }
 
   jumpToPosition(int fretIndex)
@@ -290,12 +307,16 @@ class Engine {
 
   void checkAnswer(NoteData noteData)
   {
+    engine.endMS =  DateTime.now().millisecondsSinceEpoch;
+    engine.answerTimeMS = engine.endMS - engine.startMS;
     if(noteData==currentTestNote)
     {
-        noteData.resultState = ResultState.correct;
+      engine.correct = true;
+      noteData.resultState = ResultState.correct;
     }
     else
     {
+      engine.correct = false;
       noteData.resultState =  ResultState.incorrect;
     }
   }
